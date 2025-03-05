@@ -1,0 +1,203 @@
+$(document).ready(function () {
+    // Получение элементов
+    let formContainer = $("#postForm");
+    let toggleButton = $("#toggleFormBtn");
+    let editForm = $("#editForm");
+
+    // Когда пользователь нажимает кнопку, открывается/закрывается форма
+    toggleButton.click(function() {
+        formContainer.toggle(1000);
+    });
+
+    // Когда пользователь нажимает на кнопку отправки формы, форма скрывается
+    formContainer.submit(function() {
+        setTimeout(function() {
+            formContainer.hide(1000);
+        }, 500);
+    });
+
+    // Когда пользователь нажимает в любом месте за пределами формы, она скрывается
+    $(document).mouseup(function(e) {
+        if (!formContainer.is(e.target) && formContainer.has(e.target).length === 0) {
+            formContainer.hide(1000);
+        }
+    });
+
+    // Показ формы редактирования 
+    $(".edit-btn").click( function() {
+        let postId = $(this).data("post-id");
+        let imageUrl = $(this).closest("li").find(".post").attr("src");
+        let text = $(this).closest("li").find("p").text();
+
+        $("#editId").val(postId);
+        $("#editImageUrl").val(imageUrl);
+        $("#editImageText").val(text);
+
+        editForm.show(1000);
+    });
+
+    // Когда пользователь нажимает в любом месте за пределами формы редактирования, она скрывается
+    $(document).mouseup(function(e) {
+        if (!editForm.is(e.target) && editForm.has(e.target).length === 0) {
+            editForm.hide(1000);
+        }
+    });
+
+    // Обработка создания нового поста
+    $(".submit-post-btn").click(function () {
+        const url = "/api/EcologyChat";
+        const imageUrl = $("#imageUrl").val();
+        const imageFile = $("#postForm input[type='file']")[0].files[0];
+        const text = $("#imageText").val();
+
+        const data = new FormData();
+        data.append("Url", imageUrl);
+        data.append("Text", text);
+        if (imageFile) {
+            data.append("ImageFile", imageFile);
+        }
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: data,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                const newPost = `
+                    <li>
+                        <div class="post-header">
+                            <img src="${response.userAvatar}" alt="User Icon" class="user-icon" />
+                            <span>${response.userName}</span>
+                        </div>
+                        <img src="${response.imageSrc}" class="post" alt="Picture" />
+                        <p>${response.text}</p>
+
+                        <div class="post-actions">
+                            <button class="edit-btn" data-post-id="${response.postId}">•••</button>
+                            <div class="actions-menu">
+                                <a href="/Ecology/UpdatePost?id=${response.postId}&url=${response.imageSrc}&text=${response.text}">Edit</a>
+                                <a class="tag" href="/Ecology/Remove?id=${response.postId}">Delete</a>
+                            </div>
+                        </div>
+
+                        <div class="comments">
+                            <h4>Comments</h4>
+                        </div>
+                    </li>
+                `;
+                $("ul").prepend(newPost);
+
+                // Скрываем форму после успешного создания поста
+                formContainer.hide(1000);
+            },
+            error: function (xhr) {
+                console.error(xhr.responseText);
+            }
+        });
+    });
+
+    $(document).ready(function () {
+        // Обработка нажатия на иконку лайка
+        $(".post-header .like-container .icon").click(function () {
+            $(this).toggleClass("like");
+            $(this).toggleClass("like-pushed");
+
+            const postId = $(this).closest("li").attr("data-id");
+            const url = `/api/ApiEcology/Like?ecologyId=${postId}`;
+
+            $.get(url, function (response) {
+                $(this).siblings(".like-count").text(response.newLikeCount);
+            }.bind(this));
+        });
+
+        // Обработка двойного клика на изображение
+        $("img .post").dblclick(function () {
+            const postId = $(this).closest("li").attr("data-id");
+            const url = `/api/ApiEcology/Like?ecologyId=${postId}`;
+
+            // Переключение классов иконки лайка
+            const icon = $(this).closest("li").find(".like-container .icon");
+            icon.toggleClass("like");
+            icon.toggleClass("like-pushed");
+
+            $.get(url, function (response) {
+                icon.siblings(".like-count").text(response.newLikeCount);
+            });
+        });
+
+        // Инициализация
+        function init() {
+            const url = new URL(document.location.href);
+            const perPage = url.searchParams.get('perPage');
+            $('[name=perPage]').val(perPage);
+        }
+
+        init();
+
+        // пагинация
+        $(".page").click(function () {
+            const page = $(this).attr('data-page');
+            const url = new URL(document.location.href);
+            url.searchParams.set('page', page);
+            window.location.href = url.href;
+        });
+
+        // sort
+        $('.order').click(function () {
+            const order = $(this).attr('data-order');
+            const url = new URL(document.location.href);
+
+            const orderOld = url.searchParams.get('fieldNameForSort');
+            if (orderOld == order) {
+                url.searchParams.set('orderDirection', 'Desc');
+            } else {
+                url.searchParams.set('orderDirection', 'Asc');
+            }
+
+            url.searchParams.set('page', 1);
+            url.searchParams.set('fieldNameForSort', order);
+            window.location.href = url.href;
+        });
+
+        // изменения количества элементов 
+        $('[name=perPage]').change(function () {
+            const perPage = $(this).val();
+            const url = new URL(document.location.href);
+            url.searchParams.set('perPage', perPage);
+            url.searchParams.set('page', 1);
+            window.location.href = url.href;
+        });
+
+        //показ и скрытие тегов
+        function onToggleButtonClick() {
+            $(this)
+                .closest(".ecology")
+                .find(".tag-container")
+                .toggle(1000);
+
+            $(".ecologies").removeClass("highlight-is-active");
+        }
+
+        $(".ecology .toggle-tags").click(onToggleButtonClick);
+
+        // клик по изображению
+        $(".ecology .image-container img").click(function () {
+            $(this).closest(".image-container").toggleClass("full");
+        });
+
+        // Обработка удаления
+        $(".tag.delete").click(function (event) {
+            const ecologyBlock = $(this).closest(".ecology");
+            const ecologyId = $(this).attr("data-id");
+            const url = `/api/ApiEcology/Remove?id=${ecologyId}`;
+            $.get(url).then(function (response) {
+                if (response) {
+                    ecologyBlock.remove();
+                }
+            });
+
+            event.preventDefault();
+        });
+    });
+});

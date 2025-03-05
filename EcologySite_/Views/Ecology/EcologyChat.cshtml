@@ -1,0 +1,160 @@
+@using EcologySite.Models.Ecology
+@model PostViewModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutEcology.cshtml";
+}
+
+@section Scripts {
+    <script src="~/js/Ecology/PostCreationForm.js"></script>
+    <link href="~/css/Ecology/postCreation.css" rel="stylesheet" />
+    <link href="~/css/Ecology/chat.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.2/signalr.min.js"></script>
+    <script src="~/js/Ecology/chat.js"></script>
+}
+
+<div class="add-post">
+    <!-- Кнопка для открытия/закрытия формы -->
+    <button id="toggleFormBtn" class="open-modal-btn">Add Post</button>
+    <!-- Форма для создания постов -->
+    <div id="postForm" class="post-form" style="display: none;">
+        <form method="post" action="/Ecology/EcologyChat" onsubmit="closeForm()">
+            <div>
+                <label for="imageUrl">Enter image URL:</label>
+                <input type="text" id="imageUrl" name="Url" value="@Model.Posts.FirstOrDefault()?.Url" />
+                @Html.ValidationMessageFor(model => model.Posts.FirstOrDefault().Url, "", new { @class = "text-danger" })
+            </div>
+            <div>
+                <label asp-for="Posts.FirstOrDefault().ImageFile">Upload Image</label>
+                <input type="file" asp-for="Posts.FirstOrDefault().ImageFile" />
+                @Html.ValidationMessageFor(model => model.Posts.FirstOrDefault().ImageFile, "", new { @class = "text-danger" })
+            </div>
+            <div>
+                <label for="imageText">Enter text:</label>
+                <input type="text" id="imageText" name="Text" value="@Model.Posts.FirstOrDefault()?.Text" />
+                @Html.ValidationMessageFor(model => model.Posts.FirstOrDefault().Text)
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</div>
+
+<div class="pagginator">
+    @if (!Model.Ecologies.IsStartOfPageList)
+    {
+    <a href="#" data-page="@(1)" class="page @(1 == Model.Ecologies.Page ? "active": "")">@(1)</a>
+    <span>..</span>
+    }
+
+    @foreach (var page in Model.Ecologies.Pages)
+    {
+    <a href="#" data-page="@(page)" class="page @(page == Model.Ecologies.Page ? "active": "")">@(page)</a>
+    }
+
+    @if (!Model.Ecologies.IsEndOfPageList)
+    {
+    <span>..</span>
+    <a href="#" data-page="@(Model.Ecologies.LastPage)" class="page @(Model.Ecologies.LastPage == Model.Ecologies.Page ? "active": "")">@(Model.Ecologies.LastPage)</a>
+    }
+
+    <select name="perPage">
+        <option value="3">3</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+    </select>
+</div>
+
+<div class="order-container">
+    <button class="order" data-order="Like" type="button">Order by Like</button>
+    <button class="order" data-order="Texts" type="button">Order by Name</button>
+    <button class="order" data-order="Comments" type="button">Order by Comments</button>
+    <button class="order" data-order="Default" type="button">Order by Default</button>
+</div>
+
+@if (Model.Ecologies != null)
+{
+<ul>
+    @foreach (var ecology in Model.Ecologies.Items)
+    {
+        <li class="post @(ecology.ForMainPage == 1 ? "main-page-post" : "regular-post")">
+            <div class="post-header">
+                <img src="@ecology.UserAvatar" alt="User Icon" class="user-icon"/> 
+                <span>@ecology.UserName</span>
+                <!-- Иконка лайка и количество лайков --> 
+                <div class="like-container">
+                    <i class="icon @(ecology.IsLiked ? "like-pushed" : "like")" data-post-id="@ecology.PostId">
+                    </i> <span class="like-count">@ecology.LikeCount</span>
+                </div>
+                <button class="edit-btn">•••</button>
+            </div>
+            <img src="@ecology.ImageSrc" class="post" alt="Picture"/>
+            <p>@ecology.Texts.FirstOrDefault()</p>
+
+            @if (User.Identity?.Name == @ecology.UserName)
+            {
+                <div class="post-actions">
+                    <span class="dots">•••</span>
+                    <div class="actions-menu">
+                        <a href="@Url.Action("UpdatePost", new { id = ecology.PostId, url = ecology.ImageSrc, text = ecology.Texts.FirstOrDefault() })">Edit</a>
+                        @if (ecology.CanDelete)
+                        {
+                            <a class="tag" href="/Ecology/Remove?id=@ecology.PostId">Delete</a>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="comments">
+                <h4>Comments</h4>
+                @foreach (var comment in ecology.Comments)
+                {
+                    <div class="comment">
+                        <img src="@comment.UserAvatar" alt="User Icon" class="user-icon" />
+                        <span>@comment.UserName</span>
+                        <p>@comment.CommentText</p>
+                    </div>
+                }
+                <form method="post" action="/Ecology/AddComment">
+                    <input type="hidden" name="postId" value="@ecology.PostId" />
+                    <textarea name="commentText" placeholder="Enter your comment"></textarea>
+                    <button type="submit">Add Comment</button>
+                </form>
+            </div>
+        </li>
+    }
+</ul>
+}
+
+<div id="editForm" style="display:none;">
+    <form method="post" action="/Ecology/UpdatePost">
+        <input type="hidden" id="editId" name="Id" />
+        <label for="editImageUrl">Edit image URL:</label>
+        <input type="text" id="editImageUrl" name="Url" />
+        <div>
+            <label for="editImageText">Edit text:</label>
+            <input type="text" id="editImageText" name="Text" />
+        </div>
+        <button type="submit">Save changes</button>
+    </form>
+</div>
+
+<button class="toggle-chat">Чат</button>
+<div class="chat-container hidden">
+    <div class="messages">
+        <div class="message template">***</div>
+    </div>
+    <div class="input-container">
+        <input class="new-message" placeholder="Enter the message..." />
+        <button class="send-new-message" type="button">Send</button>
+    </div>
+</div>
+
+<div class="pagginator">
+    @foreach (var page in Model.Ecologies.Pages)
+    {
+        <a href="/AnimeGirl/AllGirls?page=@(page)&perPage=@Model.Ecologies.PerPage"
+           class="page @(page == Model.Ecologies.Page ? "active": "")">@(page)</a>
+    }
+</div>

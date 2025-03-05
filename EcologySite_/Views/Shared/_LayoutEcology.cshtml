@@ -1,0 +1,42 @@
+@using EcologySite.Services
+@inject UserService userService
+<!DOCTYPE html>
+<html>
+<head>
+    <title> Calculator of environmental footprint </title>
+    <link href="~/css/Ecology/reset.css" rel="stylesheet" />
+    <link href="~/css/Ecology/style.css" rel="stylesheet" />
+    <link href="~/css/Ecology/button.css" rel="stylesheet" />
+    <link href="~/css/pagginator.css" rel="stylesheet" />
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/ajaxHelper.js"></script>
+    @* <script src="~/lib/jquery/dist/jquery.min.js"></script> *@
+    @RenderSection("Scripts", false)
+</head>
+<body>
+<header class="head-page">
+    <div class="logotip">
+        <img src="~/images/Ecology/logotip.JPG" alt="logotip" />
+    </div>
+    <div class="name">Environmental footprint</div>
+    <div class="block-of-profile">
+        <img src="@userService.GetAvatar()" alt="" class="defaltavatar" />
+        <li><a class="log-sing" href="/Ecology/EcologyProfile"></a></li>
+    </div>
+</header>
+<div class="menu-content">
+    <div class="menu custom-list">
+        <ul>
+            <li><a class="home-button" href="/"></a></li>
+            <li><a class="map-button" href="/Ecology/EcologyMap"></a></li>
+            <li><a class="chat-button" href="/Ecology/EcologyChat"></a></li>
+            <li><a class="info-button" href="/InfoEcololgyController/"></a></li>
+        </ul>
+    </div>
+    <div class="content">
+        @RenderBody()
+    </div>
+</div>
+</body>
+</html>

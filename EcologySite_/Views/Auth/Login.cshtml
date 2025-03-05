@@ -1,0 +1,22 @@
+@using EcologySite.Models.Auth
+@model LoginUserViewModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutAuth.cshtml";
+    ViewBag.PageTitle = "Login";
+}
+
+<form method="post">
+    <div>
+        @Html.TextBoxFor(x => x.UserName, new { placeholder = "login" })
+    </div>
+    <div>
+        @Html.TextBoxFor(x => x.Password, new { @type = "password", placeholder = "password" })
+    </div>
+    <div>
+        <button type="submit">Login</button>
+    </div>
+    <ul>
+        <li><a class="exit-button" href="/"></a></li>
+    </ul>
+</form>

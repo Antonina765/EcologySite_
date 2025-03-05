@@ -1,0 +1,14 @@
+﻿@model EcologySite.Models.Notification.CreateNotificationViewModel
+
+<form action="/Notification/Create" method="post">
+    <div>
+        @Html.TextBoxFor(x => x.Text)
+    </div>
+    <div>
+        @Html.TextBoxFor(x => x.Start, new { @type = "date" })
+    </div>
+    <div>
+        @Html.TextBoxFor(x => x.End, new { @type = "date" })
+    </div>
+    <button type="submit">Создать</button>
+</form>
