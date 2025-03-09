@@ -1,0 +1,8 @@
+.new-post-creation{
+    display: flex;
+}
+
+.new-post-creation-info{
+    display: flex;
+    flex-direction: column;
+}
